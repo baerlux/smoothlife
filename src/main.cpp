@@ -114,6 +114,6 @@ int main(int argc, const char **argv)
       run_game();
     }
   } catch (const std::exception &e) {
-    fmt::print("Unhandled exception in main: {}", e.what());
+    SPDLOG_ERROR("Unhandled exception in main: {}", e.what());
   }
 }
