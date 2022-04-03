@@ -15,47 +15,74 @@ struct Pos
 
 struct Player
 {
-  Pos pos;
+  Pos pos{};
+  ftxui::Components buttons;
+  ftxui::Component move_ui;
+
+  Player()
+  {
+    buttons.push_back(ftxui::Button("N ᐃ", [&] { pos.y++; }));
+    buttons.push_back(ftxui::Button("W ᐊ", [&] { pos.x--; }));
+    buttons.push_back(ftxui::Button("S ᐁ", [&] { pos.y--; }));
+    buttons.push_back(ftxui::Button("E ᐅ", [&] { pos.x++; }));
+
+    move_ui = ftxui::Container::Vertical({
+      ftxui::Renderer(buttons[0],
+        [&] {
+          return ftxui::hbox({
+            ftxui::filler(),
+            buttons[0]->Render(),
+            ftxui::filler(),
+          });
+        }),
+      ftxui::Container::Horizontal({
+        buttons[1],
+        buttons[2],
+        buttons[3],
+      }),
+    });
+
+    // use arrow keys as hotkeys for movement
+    move_ui = ftxui::CatchEvent(move_ui, [&](const ftxui::Event &event) {
+      if (event == ftxui::Event::ArrowUp) {
+        buttons[0]->TakeFocus();
+        buttons[0]->OnEvent(ftxui::Event::Return);
+        return true;
+      } else if (event == ftxui::Event::ArrowLeft) {
+        buttons[1]->TakeFocus();
+        buttons[1]->OnEvent(ftxui::Event::Return);
+        return true;
+      } else if (event == ftxui::Event::ArrowDown) {
+        buttons[2]->TakeFocus();
+        buttons[2]->OnEvent(ftxui::Event::Return);
+        return true;
+      } else if (event == ftxui::Event::ArrowRight) {
+        buttons[3]->TakeFocus();
+        buttons[3]->OnEvent(ftxui::Event::Return);
+        return true;
+      }
+      return false;
+    });
+  }
 };
 
 void run_game()
 {
-  Player player{};
+  Player player;
 
-  auto upButton = ftxui::Button("N ᐃ", [&] { player.pos.y++; });
-  auto leftButton = ftxui::Button("W ᐊ", [&] { player.pos.x--; });
-  auto downButton = ftxui::Button("S ᐁ", [&] { player.pos.y--; });
-  auto rightButton = ftxui::Button("E ᐅ", [&] { player.pos.x++; });
-
-  auto moveCtl = ftxui::Container::Vertical({
-    ftxui::Renderer(upButton,
-      [&] {
-        return ftxui::hbox({
-          ftxui::filler(),
-          upButton->Render(),
-          ftxui::filler(),
-        });
-      }),
-    ftxui::Container::Horizontal({
-      leftButton,
-      downButton,
-      rightButton,
-    }),
-  });
-
-  auto ui = ftxui::Renderer(moveCtl, [&] {
-    return ftxui::window(ftxui::text("smoothlife"),
+  auto game_ui = ftxui::Renderer(player.move_ui, [&] {
+    return ftxui::window(ftxui::text(" smoothlife "),
       ftxui::vbox({
         ftxui::text(fmt::format("{}, {}", player.pos.x, player.pos.y)),
         ftxui::separator(),
         ftxui::hbox({
-          moveCtl->Render(),
+          player.move_ui->Render(),
         }),
       }));
   });
 
   auto screen = ftxui::ScreenInteractive::FitComponent();
-  screen.Loop(ui);
+  screen.Loop(game_ui);
 }
 
 
