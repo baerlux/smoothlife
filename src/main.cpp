@@ -12,16 +12,48 @@
 
 struct Player
 {
+  // position
   int x, y;
+  int energy = 4;
+
+  // ui
   ftxui::Components buttons;
   ftxui::Component move_ui;
 
+  // defined by GameBoard
+  ftxui::Box bounds;
+  std::function<void()> interaction;
+
   Player(int x_, int y_) : x{ x_ }, y{ y_ }
   {
-    buttons.push_back(ftxui::Button("N ᐃ", [&] { y++; }));
-    buttons.push_back(ftxui::Button("W ᐊ", [&] { x--; }));
-    buttons.push_back(ftxui::Button("S ᐁ", [&] { y--; }));
-    buttons.push_back(ftxui::Button("E ᐅ", [&] { x++; }));
+    buttons.push_back(ftxui::Button(" ᐃ ", [&] {
+      if (y < bounds.y_max && energy > 0) {
+        y++;
+        energy--;
+        interaction();
+      }
+    }));
+    buttons.push_back(ftxui::Button(" ᐊ ", [&] {
+      if (x > bounds.x_min && energy > 0) {
+        x--;
+        energy--;
+        interaction();
+      }
+    }));
+    buttons.push_back(ftxui::Button(" ᐁ ", [&] {
+      if (y > bounds.y_min && energy > 0) {
+        y--;
+        energy--;
+        interaction();
+      }
+    }));
+    buttons.push_back(ftxui::Button(" ᐅ ", [&] {
+      if (x < bounds.x_max && energy > 0) {
+        x++;
+        energy--;
+        interaction();
+      }
+    }));
 
     move_ui = ftxui::Container::Vertical({
       ftxui::Renderer(buttons[0],
@@ -63,54 +95,109 @@ struct Player
   }
 };
 
+
+struct Field
+{
+  enum struct Type { empty, exit, add, sub, mul, div };
+  Type type = Type::empty;
+  int value = 0;
+
+  void apply(Player &player)
+  {
+    using enum Field::Type;
+    switch (type) {
+    case add:
+      player.energy += value;
+      break;
+    case sub:
+      player.energy -= value;
+      break;
+    case mul:
+      player.energy *= value;
+      break;
+    case div:
+      player.energy /= value;
+      break;
+    case exit:
+      return;
+    default:
+      break;
+    }
+    // reset field
+    type = empty;
+    value = 0;
+  }
+};
+
 template<std::size_t Width, std::size_t Height> struct GameBoard
 {
-  explicit GameBoard(Player &p) : player{ p } {}
+  std::array<Field, Width * Height> state{};
+  Player &player;
 
-  [[nodiscard]] int get_field(std::size_t x, std::size_t y) const { return state.at(x + Width * y); }
-
-  void set_field(std::size_t x, std::size_t y, int value)
+  explicit GameBoard(Player &p) : player{ p }
   {
-    assert(value >= 0 && value < 10);// NOLINT magic number okay here
-    state.at(x + Width * y) = value;
+    player.bounds.x_max = Width - 1;
+    player.bounds.x_min = 0;
+    player.bounds.y_max = Height - 1;
+    player.bounds.y_min = 0;
+    player.interaction = [&] { get_field(player.x, player.y).apply(player); };
+  }
+
+  [[nodiscard]] const Field &get_field(int x, int y) const
+  {
+    return state.at(static_cast<std::size_t>(x) + Width * static_cast<std::size_t>(y));
+  }
+
+  [[nodiscard]] Field &get_field(int x, int y)
+  {
+    return state.at(static_cast<std::size_t>(x) + Width * static_cast<std::size_t>(y));
+  }
+
+  void set_field(int x, int y, Field field)
+  {
+    state.at(static_cast<std::size_t>(x) + Width * static_cast<std::size_t>(y)) = field;
   }
 
   [[nodiscard]] ftxui::Element render() const
   {
     std::vector<ftxui::Element> rows;
 
-    for (std::size_t y = Height - 1; y < Height; --y) {
+    for (int y = Height - 1; y >= 0; --y) {
       std::vector<ftxui::Element> row;
-      for (std::size_t x = 0; x < Width; ++x) {
-        std::string field = " ";
-        int value = get_field(x, y);
-        if (value > 0) { field = std::to_string(value); }
-        if (static_cast<int>(x) == player.x && static_cast<int>(y) == player.y) { field = "@"; }
-        row.push_back(ftxui::text(fmt::format(" {} ", field)) | ftxui::border);
+      for (int x = 0; x < static_cast<int>(Width); ++x) {
+        std::string repr = " ";
+        const Field &field = get_field(x, y);
+        using enum Field::Type;
+        if (field.type != empty && field.type != exit && field.value > 0 && field.value < 10) {// NOLINT
+          repr = std::to_string(field.value);
+        } else if (field.type == exit) {
+          repr = "⛝";
+        }
+        if (x == player.x && y == player.y) { repr = "@"; }
+        row.push_back(ftxui::text(fmt::format(" {} ", repr)) | ftxui::border);
       }
       rows.push_back(ftxui::hbox(std::move(row)));
     }
 
     return ftxui::vbox(std::move(rows));
   }
-
-private:
-  std::array<int, Width * Height> state{};
-  Player &player;
 };
 
 void run_game()
 {
   Player player{ 2, 2 };
   GameBoard<5, 5> board{ player };// NOLINT magic number okay
-  board.set_field(0, 3, 6);// NOLINT magic number
-  board.set_field(4, 1, 7);// NOLINT magic number
-  board.set_field(1, 2, 2);// NOLINT magic number
+
+  using enum Field::Type;
+  board.set_field(0, 3, { div, 2 });// NOLINT magic number
+  board.set_field(4, 1, { mul, 7 });// NOLINT magic number
+  board.set_field(1, 2, { add, 4 });// NOLINT magic number
+  board.set_field(4, 0, { exit });// NOLINT magic number
 
   auto game_ui = ftxui::Renderer(player.move_ui, [&] {
     return ftxui::window(ftxui::text(" smoothlife "),
       ftxui::vbox({
-        ftxui::text(fmt::format("{}, {}", player.x, player.y)),
+        ftxui::text(fmt::format("energy: {}", player.energy)),
         ftxui::separator(),
         board.render(),
         ftxui::separator(),
@@ -132,8 +219,6 @@ int main(int argc, const char **argv)
       R"(
     Usage:
           smoothlife
-          smoothlife test spdlog
-          smoothlife test numbers
           smoothlife --version
           smoothlife (-h | --help)
     Options:
@@ -146,13 +231,8 @@ int main(int argc, const char **argv)
       true,
       fmt::format("{} {}", smoothlife::cmake::project_name, smoothlife::cmake::project_version));
 
-    if (args["spdlog"].asBool()) {
-      SPDLOG_INFO("spdlog works!");
-      SPDLOG_WARN("careful!");
-      SPDLOG_ERROR("bad stuff!");
-    } else {
-      run_game();
-    }
+    run_game();
+
   } catch (const std::exception &e) {
     SPDLOG_ERROR("Unhandled exception in main: {}", e.what());
   }
