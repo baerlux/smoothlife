@@ -1,5 +1,5 @@
-#ifndef UTIL_HPP
-#define UTIL_HPP
+#ifndef SMOOTHLIFE_UTIL_HPP
+#define SMOOTHLIFE_UTIL_HPP
 
 #include "config.hpp"
 
@@ -41,4 +41,4 @@ int roundness(int number)
 
 }// namespace smoothlife
 
-#endif// UTIL_HPP
+#endif// SMOOTHLIFE_UTIL_HPP

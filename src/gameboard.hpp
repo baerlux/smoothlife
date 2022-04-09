@@ -1,60 +1,13 @@
-#ifndef GAMEBOARD_HPP
-#define GAMEBOARD_HPP
+#ifndef SMOOTHLIFE_GAMEBOARD_HPP
+#define SMOOTHLIFE_GAMEBOARD_HPP
 
 #include "config.hpp"
+#include "eventlog.hpp"
+#include "field.hpp"
 #include "player.hpp"
 #include "util.hpp"
 
 namespace smoothlife {
-
-struct Field
-{
-  enum struct Type { empty, exit, add, sub, mul, div };
-  Type type = Type::empty;
-  int value = 0;
-
-  using enum Type;
-
-  [[nodiscard]] Field inverse() const
-  {
-    switch (type) {
-    case add:
-      return { sub, value };
-    case sub:
-      return { add, value };
-    case mul:
-      return { div, value };
-    case div:
-      return { mul, value };
-    default:
-      return { empty, value };
-    }
-  }
-
-  void apply(int &surface)
-  {
-    switch (type) {
-    case add:
-      surface += value;
-      break;
-    case sub:
-      surface -= value;
-      break;
-    case mul:
-      surface *= value;
-      break;
-    case div:
-      surface /= value;
-      break;
-    default:
-      return;
-    }
-
-    // reset field if it was applied
-    type = empty;
-    value = 0;
-  }
-};
 
 template<std::size_t Width, std::size_t Height, class Prng> struct GameBoard
 {
@@ -63,8 +16,10 @@ template<std::size_t Width, std::size_t Height, class Prng> struct GameBoard
   std::array<Field, Width * Height> state;
   Player &player;
   Prng &rnd;
+  EventLog<config::event_log_length> &log;
 
-  GameBoard(Prng &randomness_provider, Player &p) : player{ p }, rnd{ randomness_provider }
+  GameBoard(Prng &randomness_provider, Player &p, EventLog<config::event_log_length> &el)
+    : player{ p }, rnd{ randomness_provider }, log{ el }
   {
     player.bounds.x_max = Width - 1;
     player.bounds.x_min = 0;
@@ -80,6 +35,7 @@ template<std::size_t Width, std::size_t Height, class Prng> struct GameBoard
         break;
       default:
         f.apply(player.surface);
+        log.post_event("bla");
         break;
       }
     };
@@ -195,4 +151,4 @@ template<std::size_t Width, std::size_t Height, class Prng> struct GameBoard
 
 }// namespace smoothlife
 
-#endif// GAMEBOARD_HPP
+#endif// SMOOTHLIFE_GAMEBOARD_HPP

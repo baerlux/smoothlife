@@ -1,5 +1,5 @@
-#ifndef CONFIG_HPP
-#define CONFIG_HPP
+#ifndef SMOOTHLIFE_CONFIG_HPP
+#define SMOOTHLIFE_CONFIG_HPP
 
 #include <array>
 #include <deque>
@@ -29,4 +29,4 @@ static constexpr std::size_t board_height = 5;
 
 }// namespace smoothlife::config
 
-#endif// CONFIG_HPP
+#endif// SMOOTHLIFE_CONFIG_HPP

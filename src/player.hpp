@@ -1,5 +1,5 @@
-#ifndef PLAYER_HPP
-#define PLAYER_HPP
+#ifndef SMOOTHLIFE_PLAYER_HPP
+#define SMOOTHLIFE_PLAYER_HPP
 
 #include "config.hpp"
 
@@ -92,4 +92,4 @@ struct Player
 
 }// namespace smoothlife
 
-#endif// PLAYER_HPP
+#endif// SMOOTHLIFE_PLAYER_HPP
