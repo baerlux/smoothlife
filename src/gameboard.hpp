@@ -5,6 +5,8 @@
 #include "player.hpp"
 #include "util.hpp"
 
+namespace smoothlife {
+
 struct Field
 {
   enum struct Type { empty, exit, add, sub, mul, div };
@@ -47,6 +49,7 @@ struct Field
     default:
       return;
     }
+
     // reset field if it was applied
     type = empty;
     value = 0;
@@ -100,7 +103,6 @@ template<std::size_t Width, std::size_t Height, class Prng> struct GameBoard
 
     // player
     occupied.at(pack2d(0, 0)) = true;
-    // player.energy = 100;// NOLINT
     player.x = 0;
     player.y = 0;
 
@@ -109,7 +111,7 @@ template<std::size_t Width, std::size_t Height, class Prng> struct GameBoard
     set_field(Width - 1, Height - 1, { exit });
 
     // generate field chain
-    for (int i = 0; i < 3; ++i) {// NOLINT
+    for (int i = 0; i < 4; ++i) {// NOLINT
 
       Field rnd_f{ static_cast<Field::Type>(in_field_types(rnd)), in_one_to_nine(rnd) };
 
@@ -141,19 +143,19 @@ template<std::size_t Width, std::size_t Height, class Prng> struct GameBoard
 
   static size_t pack2d(int x, int y) { return static_cast<std::size_t>(x) + Width * static_cast<std::size_t>(y); }
 
+  void set_field(int x, int y, Field field) { state.at(pack2d(x, y)) = field; }
+
   [[nodiscard]] const Field &get_field(int x, int y) const { return state.at(pack2d(x, y)); }
 
   [[nodiscard]] Field &get_field(int x, int y) { return state.at(pack2d(x, y)); }
 
-  void set_field(int x, int y, Field field) { state.at(pack2d(x, y)) = field; }
-
   [[nodiscard]] ftxui::Element render() const
   {
     using enum ftxui::Color::Palette16;
-    std::vector<ftxui::Element> rows;
+    ftxui::Elements rows;
 
     for (int y = Height - 1; y >= 0; --y) {
-      std::vector<ftxui::Element> row;
+      ftxui::Elements row;
 
       for (int x = 0; x < static_cast<int>(Width); ++x) {
         std::string repr = " ";
@@ -190,5 +192,7 @@ template<std::size_t Width, std::size_t Height, class Prng> struct GameBoard
     return ftxui::vbox(std::move(rows));
   }
 };
+
+}// namespace smoothlife
 
 #endif// GAMEBOARD_HPP

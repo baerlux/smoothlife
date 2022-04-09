@@ -3,6 +3,8 @@
 
 #include "config.hpp"
 
+namespace smoothlife {
+
 struct Player
 {
   // set by GameBoard
@@ -87,5 +89,7 @@ struct Player
     });
   }
 };
+
+}// namespace smoothlife
 
 #endif// PLAYER_HPP

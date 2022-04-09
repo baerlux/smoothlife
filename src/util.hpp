@@ -3,6 +3,8 @@
 
 #include "config.hpp"
 
+namespace smoothlife {
+
 /**
  * @brief calculates the roundness of a number
  * see: https://en.wikipedia.org/wiki/Round_number
@@ -36,5 +38,7 @@ int roundness(int number)
 
   return roundness;
 }
+
+}// namespace smoothlife
 
 #endif// UTIL_HPP
