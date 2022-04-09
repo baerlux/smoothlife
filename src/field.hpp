@@ -1,6 +1,10 @@
 #ifndef SMOOTHLIFE_FIELD_HPP
 #define SMOOTHLIFE_FIELD_HPP
 
+#include "config.hpp"
+#include "log.hpp"
+#include "util.hpp"
+
 namespace smoothlife {
 
 struct Field
@@ -27,23 +31,51 @@ struct Field
     }
   }
 
-  void apply(int &surface)
+  void apply(int &surface, Log<config::log_length> *log = nullptr)
   {
+    int prev = 0;
+    int change = 0;
+
     switch (type) {
     case add:
+      prev = roundness(surface);
       surface += value;
+      change = roundness(surface) - prev;
+      if (log) { log->post_event("Add polishing paste."); }
       break;
     case sub:
+      prev = roundness(surface);
       surface -= value;
+      change = roundness(surface) - prev;
+      if (log) { log->post_event("Remove burrs."); }
       break;
     case mul:
+      prev = roundness(surface);
       surface *= value;
+      change = roundness(surface) - prev;
+      if (log) { log->post_event("Use finer sanding."); }
       break;
     case div:
+      prev = roundness(surface);
       surface /= value;
+      change = roundness(surface) - prev;
+      if (log) { log->post_event("Disassemble parts."); }
       break;
     default:
       return;
+    }
+
+    if (log) {
+      using enum Log<config::log_length>::Type;
+      if (change == 1) {
+        log->post_event("Nice, it's getting smooth!", good);
+      } else if (change > 1) {
+        log->post_event("Great, so smooth and shiny!", good);
+      } else if (change == -1) {
+        log->post_event("Oof, you slipped!", bad);
+      } else if (change < -1) {
+        log->post_event("Damn, what a mess!", bad);
+      }
     }
 
     // reset field if it was applied

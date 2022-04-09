@@ -4,6 +4,7 @@
 #include <array>
 #include <deque>
 #include <random>
+#include <utility>
 #include <vector>
 
 #include <ftxui/component/component.hpp>
@@ -17,9 +18,11 @@ namespace smoothlife::config {
 
 // gameplay config
 static constexpr int base = 10;
+static constexpr int player_lives = 5;
+static constexpr int player_energy = 100;
 
 // ui config
-static constexpr std::size_t event_log_length = 4;
+static constexpr std::size_t log_length = 4;
 
 static constexpr std::size_t panel_width = 19;
 static constexpr std::size_t panel_height = 9;

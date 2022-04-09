@@ -9,15 +9,14 @@ namespace smoothlife {
 void game_loop()
 {
   Player player;
-  EventLog<config::event_log_length> log;
-
+  Log<config::log_length> log;
   auto prng = std::ranlux24{ std::random_device{}() };
+
   GameBoard<config::board_width, config::board_height, std::ranlux24> board{ prng, player, log };
   board.generate_level();
 
   auto screen = ftxui::ScreenInteractive::FitComponent();
   auto quit_button = ftxui::Button("Quit", screen.ExitLoopClosure());
-
   auto container = ftxui::Container::Horizontal({ player.move_ui, quit_button });
 
   auto game_ui = ftxui::Renderer(container, [&] {
@@ -26,7 +25,7 @@ void game_loop()
       ftxui::hbox({
         ftxui::vbox({
           ftxui::text(""),
-          ftxui::text(""),
+          ftxui::text(player.health()) | ftxui::hcenter,
           ftxui::text(""),
           ftxui::vbox({
             ftxui::hbox({

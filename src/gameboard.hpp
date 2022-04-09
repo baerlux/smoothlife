@@ -2,8 +2,8 @@
 #define SMOOTHLIFE_GAMEBOARD_HPP
 
 #include "config.hpp"
-#include "eventlog.hpp"
 #include "field.hpp"
+#include "log.hpp"
 #include "player.hpp"
 #include "util.hpp"
 
@@ -16,9 +16,9 @@ template<std::size_t Width, std::size_t Height, class Prng> struct GameBoard
   std::array<Field, Width * Height> state;
   Player &player;
   Prng &rnd;
-  EventLog<config::event_log_length> &log;
+  Log<config::log_length> &log;
 
-  GameBoard(Prng &randomness_provider, Player &p, EventLog<config::event_log_length> &el)
+  GameBoard(Prng &randomness_provider, Player &p, Log<config::log_length> &el)
     : player{ p }, rnd{ randomness_provider }, log{ el }
   {
     player.bounds.x_max = Width - 1;
@@ -31,15 +31,26 @@ template<std::size_t Width, std::size_t Height, class Prng> struct GameBoard
       case empty:
         break;
       case exit:
+        using enum Log<config::log_length>::Type;
+        if (roundness(player.surface) == 0) {
+          --player.lives;
+          log.post_event("You failed this time :(", bad);
+        } else if (roundness(player.surface) == 1) {
+          log.post_event("An okay polish ^.^", good);
+        } else if (roundness(player.surface) == 2) {
+          log.post_event("A really fine polish ^.^", good);
+        } else if (roundness(player.surface) > 2) {
+          log.post_event("Truly a masterpiece *.*", amazing);
+        }
         generate_level();
         break;
       default:
-        f.apply(player.surface);
-        log.post_event("bla");
+        f.apply(player.surface, &log);
         break;
       }
     };
-    player.energy = 100;// NOLINT
+    player.energy = config::player_energy;
+    player.lives = config::player_lives;
   }
 
   void generate_level()
@@ -88,7 +99,7 @@ template<std::size_t Width, std::size_t Height, class Prng> struct GameBoard
         rnd_y = in_board_height(rnd);
       } while (occupied.at(pack2d(rnd_x, rnd_y)));
 
-      set_field(rnd_x, rnd_y, rnd_f);// NOLINT
+      set_field(rnd_x, rnd_y, rnd_f);
       occupied.at(pack2d(rnd_x, rnd_y)) = true;
 
       rnd_f.inverse().apply(goal);

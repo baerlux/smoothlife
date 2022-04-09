@@ -9,8 +9,9 @@ struct Player
 {
   // set by GameBoard
   int x{}, y{};
-  int energy{};
   int surface{};
+  int energy = config::player_energy;
+  int lives = config::player_lives;
 
   std::function<void()> interaction;
   ftxui::Box bounds;
@@ -18,6 +19,19 @@ struct Player
   // player control ui
   ftxui::Components buttons;
   ftxui::Component move_ui;
+
+  [[nodiscard]] std::string health() const
+  {
+    std::string health_str = "";
+    for (int i = 0; i < config::player_lives; ++i) {
+      if (i < lives) {
+        health_str.append("♥ ");
+      } else {
+        health_str.append("♡ ");
+      }
+    }
+    return health_str;
+  }
 
   Player()
   {
