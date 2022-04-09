@@ -20,8 +20,11 @@
  */
 int roundness(int number)
 {
+  if (number == 0) { return 1; }
+
   int roundness = 0;
   int places = config::base;
+
   while (true) {
     if (number % places == 0) {
       ++roundness;
@@ -30,6 +33,7 @@ int roundness(int number)
     }
     places *= config::base;
   }
+
   return roundness;
 }
 
