@@ -24,9 +24,7 @@ void game_loop()
     return ftxui::window(ftxui::text(" smoothlife ") | ftxui::hcenter | ftxui::bold,
       ftxui::hbox({
         ftxui::vbox({
-          ftxui::text(""),
-          ftxui::text(player.health()) | ftxui::hcenter,
-          ftxui::text(""),
+          ftxui::text(player.health()) | ftxui::hcenter | ftxui::color(RedLight) | ftxui::border,
           ftxui::vbox({
             ftxui::hbox({
               ftxui::filler(),
@@ -42,9 +40,9 @@ void game_loop()
         board.render(),
         ftxui::separator(),
         ftxui::vbox({
-          ftxui::text(""),
           ftxui::text(fmt::format(" energy  {:>6}", player.energy)),
           ftxui::text(fmt::format(" surface {:>6}", player.surface)),
+          ftxui::text(""),
           log.render(),
           ftxui::text(" legend:") | ftxui::color(GrayDark),
           ftxui::hbox({

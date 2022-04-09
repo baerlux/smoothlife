@@ -25,10 +25,11 @@ struct Player
     std::string health_str = "";
     for (int i = 0; i < config::player_lives; ++i) {
       if (i < lives) {
-        health_str.append("♥ ");
+        health_str.append("♥");
       } else {
-        health_str.append("♡ ");
+        health_str.append("♡");
       }
+      if (i < config::player_lives - 1) { health_str.append(" "); }
     }
     return health_str;
   }
