@@ -20,7 +20,7 @@ namespace smoothlife {
  * @param number integer to determine the roundness of.
  * @return int
  */
-int roundness(int number)
+int roundness(long number)
 {
   if (number == 0) { return 1; }
 

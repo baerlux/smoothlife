@@ -31,7 +31,7 @@ struct Field
     }
   }
 
-  void apply(int &surface, Log *log = nullptr)
+  void apply(long &surface, Log *log = nullptr)
   {
     int prev = 0;
     int change = 0;

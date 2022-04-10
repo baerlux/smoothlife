@@ -9,7 +9,7 @@ struct Player
 {
   int x = 0;
   int y = 0;
-  int surface = 0;
+  long surface = 0;
   int score = 0;
   int steps = 0;
   int energy = config::player_energy;

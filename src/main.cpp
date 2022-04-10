@@ -6,7 +6,7 @@
 
 namespace smoothlife {
 
-void game_loop()
+void game_loop(bool skip_tutorial = false)
 {
   Player player;
   Log log{ config::log_length };
@@ -16,10 +16,13 @@ void game_loop()
   GameBoard board{ prng, player, log };
   board.generate_level();
 
+  if (skip_tutorial) { board.stage = GameStage::game; }
+
   auto screen = ftxui::ScreenInteractive::FitComponent();
   auto quit_button = ftxui::Button("Quit", screen.ExitLoopClosure());
   auto continue_button = ftxui::Button("Continue", [&] { ++board.stage; });
-  auto container = ftxui::Container::Horizontal({ player.move_ui, quit_button, continue_button });
+  auto retry_button = ftxui::Button("Retry", [&] { game_loop(true); });
+  auto container = ftxui::Container::Horizontal({ player.move_ui, quit_button, continue_button, retry_button });
 
   auto game_ui = ftxui::Renderer(container, [&] {
     using enum ftxui::Color::Palette16;
@@ -43,9 +46,12 @@ void game_loop()
         board.render(),
         ftxui::separator(),
         ftxui::vbox({
-          ftxui::text(fmt::format(" energy  {:>6}", player.energy)),
-          ftxui::text(fmt::format(" surface {:>6}", player.surface)),
-          ftxui::text(fmt::format(" score   {:>6}", player.score)),
+          ftxui::hbox(
+            { ftxui::text(" energy  "), ftxui::text(fmt::format("{:>8}", player.energy)) | ftxui::color(Yellow) }),
+          ftxui::hbox(
+            { ftxui::text(" surface "), ftxui::text(fmt::format("{:>8}", player.surface)) | ftxui::color(Blue) }),
+          ftxui::hbox(
+            { ftxui::text(" score   "), ftxui::text(fmt::format("{:>8}", player.score)) | ftxui::color(Magenta) }),
           log.render(),
           ftxui::text(" legend:") | ftxui::color(GrayDark),
           ftxui::hbox({
@@ -74,7 +80,7 @@ void game_loop()
         }) | ftxui::borderDouble
           | ftxui::clear_under | ftxui::center,
       });
-    } else if (board.stage == GameStage::tutorial) {
+    } else if (board.stage == GameStage::tutorial_1) {
       window = ftxui::dbox({
         window,
         ftxui::vbox({
@@ -82,44 +88,75 @@ void game_loop()
           ftxui::text(" Airy voice: Stop pitying yourself, fool! "),
           ftxui::text("     You're almost there! Keep on polishing! "),
           ftxui::separator(),
-          ftxui::text(" Combine operations to make the surface-number as round as possible. "),
+          ftxui::text(" Tutorial: ") | ftxui::bold,
+          ftxui::hbox({
+            ftxui::text(" Combine operations to make the "),
+            ftxui::text("surface-number") | ftxui::color(Blue),
+            ftxui::text(" as round as possible. "),
+          }),
+          ftxui::text(" A round number is an integer that ends with one or more '0's. "),
           ftxui::text(" Example: 592 is less round than 590 is less round than 600. "),
-          ftxui::text(" Go to the exit ⋒ and your score is calculated for this level. "),
-          ftxui::text(" With a roundness of 0 you lose a life."),
-          ftxui::text(" The game ends if your energy or your lives reach zero. "),
+          ftxui::text(""),
+          ftxui::hbox({ continue_button->Render() }),
+        }) | ftxui::borderDouble
+          | ftxui::clear_under | ftxui::center,
+      });
+    } else if (board.stage == GameStage::tutorial_2) {
+      window = ftxui::dbox({
+        window,
+        ftxui::vbox({
+          ftxui::text(""),
+          ftxui::text(" Tutorial: ") | ftxui::bold,
+          ftxui::hbox({
+            ftxui::text(" Go to the exit ⋒ and your "),
+            ftxui::text("score") | ftxui::color(Magenta),
+            ftxui::text(" for this level is calculated. "),
+          }),
+          ftxui::text(" With a non-round number like 592 you lose a life. "),
+          ftxui::hbox({
+            ftxui::text(" The game ends if your "),
+            ftxui::text("energy-value") | ftxui::color(Yellow),
+            ftxui::text(" or your "),
+            ftxui::text("lives") | ftxui::color(Red),
+            ftxui::text(" reach zero. "),
+          }),
+          ftxui::text(fmt::format(
+            " Each step and every {} seconds you lose one energy point. ", config::energy_decrement_time.count())),
+          ftxui::text(" You can regain energy with a good polish. "),
+          ftxui::text(fmt::format(" You need a minimum score of {} to win. ", config::min_win_score)),
           ftxui::text(""),
           ftxui::hbox({ continue_button->Render() }),
         }) | ftxui::borderDouble
           | ftxui::clear_under | ftxui::center,
       });
     } else if (board.stage == GameStage::ending) {
-      if (player.lives == 0 || board.level < config::min_win_level) {
+      if (player.score < config::min_win_score) {
         window = ftxui::dbox({
           window,
           ftxui::vbox({
             ftxui::text(""),
-            ftxui::text(" You wake up feeling terrified. What a nightmare ! "),
+            ftxui::text(" You wake up feeling terrified. What a nightmare! "),
             ftxui::text(" Later that day you fail the exam :C"),
             ftxui::text(" You become a looser for the rest of your life."),
             ftxui::text(""),
             ftxui::text(fmt::format(" Total score: {}", player.score)) | ftxui::hcenter | ftxui::bold,
             ftxui::text(""),
-            ftxui::hbox({ quit_button->Render() }),
+            ftxui::hbox({ quit_button->Render(), retry_button->Render() }),
           }) | ftxui::borderDouble
             | ftxui::clear_under | ftxui::center,
         });
-      } else if (player.energy == 0) {
+      } else {
         window = ftxui::dbox({
           window,
           ftxui::vbox({
             ftxui::text(""),
-            ftxui::text(" You wake up feeling refreshed. What a great dream ! "),
+            ftxui::text(" You wake up feeling refreshed. What a great dream! "),
             ftxui::text(" Later that day you pass the exam *.* "),
             ftxui::text(" You become a master of your craft and live a smoothlife. "),
             ftxui::text(""),
             ftxui::text(fmt::format(" Total score: {}", player.score)) | ftxui::hcenter | ftxui::bold,
             ftxui::text(""),
-            ftxui::hbox({ quit_button->Render() }),
+            ftxui::hbox({ quit_button->Render(), retry_button->Render() }),
           }) | ftxui::borderDouble
             | ftxui::clear_under | ftxui::center,
         });
@@ -129,7 +166,20 @@ void game_loop()
     return window;
   });
 
+  std::atomic<bool> refresh_ui_continue = true;
+
+  // This thread exists to decrement player.energy every few seconds
+  std::thread refresh_ui([&] {
+    while (refresh_ui_continue) {
+      std::this_thread::sleep_for(config::energy_decrement_time);
+      if (board.stage == GameStage::game) { player.energy -= 1; }
+      screen.PostEvent(ftxui::Event::Custom);
+    }
+  });
+
   screen.Loop(game_ui);
+  refresh_ui_continue = false;
+  refresh_ui.join();
 }
 
 }// namespace smoothlife

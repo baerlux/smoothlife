@@ -4,6 +4,7 @@
 #include <array>
 #include <deque>
 #include <random>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -16,13 +17,20 @@
 
 namespace smoothlife::config {
 
+using namespace std::chrono_literals;
+
 // gameplay config
 static constexpr int base = 10;
-static constexpr int player_lives = 5;
-static constexpr int player_energy = 100;
 static constexpr int chain_length = 3;
 static constexpr int surface_size = 100;
-static constexpr int min_win_level = 4;
+static constexpr int max_surface_factor = 10000;
+static constexpr int min_win_score = 5000;
+static constexpr int player_lives = 5;
+static constexpr int player_energy = 100;
+static constexpr int ok_energy_gain = 10;
+static constexpr int fine_energy_gain = 20;
+static constexpr int master_energy_gain = 30;
+static constexpr auto energy_decrement_time = 5s;
 
 // ui config
 static constexpr std::size_t log_length = 4;
