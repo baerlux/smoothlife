@@ -7,12 +7,15 @@ namespace smoothlife {
 
 struct Player
 {
-  // set by GameBoard
-  int x{}, y{};
-  int surface{};
+  int x = 0;
+  int y = 0;
+  int surface = 0;
+  int score = 0;
+  int steps = 0;
   int energy = config::player_energy;
   int lives = config::player_lives;
 
+  // set by GameBoard
   std::function<void()> interaction;
   ftxui::Box bounds;
 

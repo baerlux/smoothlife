@@ -9,48 +9,73 @@
 
 namespace smoothlife {
 
+enum struct GameStage : int { intro = 1, tutorial = 2, game = 3, ending = 4 };
+
+// Make GameStage incrementable
+GameStage &operator++(GameStage &stage)
+{
+  using IntType = typename std::underlying_type<GameStage>::type;
+  if (stage != GameStage::ending) { stage = static_cast<GameStage>(static_cast<IntType>(stage) + 1); }
+  return stage;
+}
+
 template<std::size_t Width, std::size_t Height, class Prng> struct GameBoard
 {
   using enum Field::Type;
 
+  GameStage stage = GameStage::intro;
   std::array<Field, Width * Height> state;
+
   Player &player;
   Prng &rnd;
-  Log<config::log_length> &log;
+  Log &log;
 
-  GameBoard(Prng &randomness_provider, Player &p, Log<config::log_length> &el)
-    : player{ p }, rnd{ randomness_provider }, log{ el }
+  int level = 0;
+
+  GameBoard(Prng &randomness_provider, Player &p, Log &l) : player{ p }, rnd{ randomness_provider }, log{ l }
   {
     player.bounds.x_max = Width - 1;
     player.bounds.x_min = 0;
     player.bounds.y_max = Height - 1;
     player.bounds.y_min = 0;
+
     player.interaction = [&] {
+      if (player.lives == 0 || player.energy == 0) {
+        ++stage;
+        return;
+      }
+
       Field &f = get_field(player.x, player.y);
-      switch (f.type) {
-      case empty:
-        break;
-      case exit:
-        using enum Log<config::log_length>::Type;
-        if (roundness(player.surface) == 0) {
-          --player.lives;
+      ++player.steps;
+
+      if (f.type == empty) {
+        return;
+      } else if (f.type == exit) {
+        using enum Log::Type;
+        int r = roundness(player.surface);
+        int score = (r + level) * (config::player_energy - player.steps);
+        if (r == 0) {
           log.post_event("You failed this time :(", bad);
-        } else if (roundness(player.surface) == 1) {
-          log.post_event("An okay polish ^.^", good);
-        } else if (roundness(player.surface) == 2) {
-          log.post_event("A really fine polish ^.^", good);
-        } else if (roundness(player.surface) > 2) {
-          log.post_event("Truly a masterpiece *.*", amazing);
+          --player.lives;
+        } else if (r == 1) {
+          log.post_event(fmt::format("An okay polish. +{}", score), neutral);
+          player.score += score;
+          ++level;
+        } else if (r == 2) {
+          log.post_event(fmt::format("A really fine polish ^.^ +{}", score), good);
+          player.score += score;
+          ++level;
+        } else if (r > 2) {
+          log.post_event(fmt::format("Truly a masterpiece *.* +{}", score), amazing);
+          player.score += score;
+          ++level;
         }
+        player.steps = 0;
         generate_level();
-        break;
-      default:
+      } else {
         f.apply(player.surface, &log);
-        break;
       }
     };
-    player.energy = config::player_energy;
-    player.lives = config::player_lives;
   }
 
   void generate_level()
@@ -61,10 +86,11 @@ template<std::size_t Width, std::size_t Height, class Prng> struct GameBoard
     using uni = std::uniform_int_distribution<int>;
     uni in_board_width{ 0, Width - 1 };
     uni in_board_height{ 0, Height - 1 };
-    uni in_field_types{ 2, 5 };// NOLINT
-    uni in_one_to_nine{ 1, 9 };// NOLINT
+    uni in_field_types{ static_cast<int>(Field::Type::add), static_cast<int>(Field::Type::div) };
+    uni in_one_to_nine{ 1, config::base - 1 };
 
-    int goal = in_one_to_nine(rnd) * 100;// NOLINT
+    // generate a round number surface, increase surface size every two levels
+    int surface = in_one_to_nine(rnd) * config::surface_size * static_cast<int>(std::pow(10, level / 2));
 
     std::array<bool, Width * Height> occupied{};
 
@@ -77,35 +103,36 @@ template<std::size_t Width, std::size_t Height, class Prng> struct GameBoard
     occupied.at(pack2d(Width - 1, Height - 1)) = true;
     set_field(Width - 1, Height - 1, { exit });
 
-    // generate field chain
-    for (int i = 0; i < 4; ++i) {// NOLINT
-
+    // generate field chain, increase length every two levels
+    for (int i = 0; i < config::chain_length + level / 2; ++i) {
+      // random operation field
       Field rnd_f{ static_cast<Field::Type>(in_field_types(rnd)), in_one_to_nine(rnd) };
 
+      // search for op to result in a whole number
       if (rnd_f.type == mul) {
-        int rem = goal % rnd_f.value;
+        int rem = surface % rnd_f.value;
         while (rem != 0) {
           rnd_f.value = in_one_to_nine(rnd);
-          rem = goal % rnd_f.value;
+          rem = surface % rnd_f.value;
         }
       }
 
-      int rnd_x{};
-      int rnd_y{};
-
       // search for empty field
+      int rnd_x, rnd_y;
       do {
         rnd_x = in_board_width(rnd);
         rnd_y = in_board_height(rnd);
       } while (occupied.at(pack2d(rnd_x, rnd_y)));
 
+      // place operation field
       set_field(rnd_x, rnd_y, rnd_f);
       occupied.at(pack2d(rnd_x, rnd_y)) = true;
 
-      rnd_f.inverse().apply(goal);
+      // make surface rough
+      rnd_f.inverse().apply(surface);
     }
 
-    player.surface = goal;
+    player.surface = surface;
   }
 
   static size_t pack2d(int x, int y) { return static_cast<std::size_t>(x) + Width * static_cast<std::size_t>(y); }

@@ -50,7 +50,7 @@ include(${_project_options_SOURCE_DIR}/Index.cmake)
 # Set the project name and language
 project(
   smoothlife
-  VERSION 0.0.1
+  VERSION 1.0.0
   DESCRIPTION ""
   HOMEPAGE_URL "https://github.com/baerlux/smoothlife"
   LANGUAGES CXX C)

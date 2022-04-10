@@ -9,7 +9,7 @@ namespace smoothlife {
 
 struct Field
 {
-  enum struct Type { empty, exit, add, sub, mul, div };
+  enum struct Type : int { empty = 0, exit = 1, add = 2, sub = 3, mul = 4, div = 5 };
   using enum Type;
 
   Type type = empty;
@@ -31,7 +31,7 @@ struct Field
     }
   }
 
-  void apply(int &surface, Log<config::log_length> *log = nullptr)
+  void apply(int &surface, Log *log = nullptr)
   {
     int prev = 0;
     int change = 0;
@@ -66,13 +66,11 @@ struct Field
     }
 
     if (log) {
-      using enum Log<config::log_length>::Type;
+      using enum Log::Type;
       if (change == 1) {
         log->post_event("Nice, it's getting smooth!", good);
       } else if (change > 1) {
         log->post_event("Great, so smooth and shiny!", good);
-      } else if (change == -1) {
-        log->post_event("Oof, you slipped!", bad);
       } else if (change < -1) {
         log->post_event("Damn, what a mess!", bad);
       }

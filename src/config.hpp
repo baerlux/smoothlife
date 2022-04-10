@@ -20,6 +20,9 @@ namespace smoothlife::config {
 static constexpr int base = 10;
 static constexpr int player_lives = 5;
 static constexpr int player_energy = 100;
+static constexpr int chain_length = 3;
+static constexpr int surface_size = 100;
+static constexpr int min_win_level = 4;
 
 // ui config
 static constexpr std::size_t log_length = 4;

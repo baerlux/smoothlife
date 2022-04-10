@@ -5,16 +5,20 @@
 
 namespace smoothlife {
 
-template<std::size_t Length> struct Log
+struct Log
 {
   enum struct Type { amazing, good, bad, neutral };
+  using enum Type;
 
+  std::size_t length;
   std::deque<std::pair<std::string, Type>> log;
 
-  void post_event(const std::string &event, Type type = Type::neutral)
+  explicit Log(std::size_t len) : length{ len } {}
+
+  void post_event(const std::string &event, Type type = neutral)
   {
     log.push_front({ event, type });
-    if (log.size() > Length) { log.pop_back(); }
+    if (log.size() > length) { log.pop_back(); }
   }
 
   [[nodiscard]] ftxui::Element render() const
@@ -26,11 +30,11 @@ template<std::size_t Length> struct Log
 
     for (std::size_t i = 0; i < log.size(); ++i) {
       ftxui::Decorator color = ftxui::color(shades.at(std::min(i, shades.size() - 1)));
-      if (i == 0 && log.at(i).second == Type::amazing) {
+      if (i == 0 && log.at(i).second == amazing) {
         color = ftxui::color(GreenLight);
-      } else if (i == 0 && log.at(i).second == Type::good) {
+      } else if (i == 0 && log.at(i).second == good) {
         color = ftxui::color(BlueLight);
-      } else if (i == 0 && log.at(i).second == Type::bad) {
+      } else if (i == 0 && log.at(i).second == bad) {
         color = ftxui::color(RedLight);
       }
       events.push_back(ftxui::paragraph(log.at(i).first) | color);
