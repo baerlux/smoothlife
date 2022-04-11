@@ -1,16 +1,17 @@
 # smoothlife
 
 [![ci](https://github.com/baerlux/smoothlife/actions/workflows/ci.yml/badge.svg)](https://github.com/baerlux/smoothlife/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/baerlux/smoothlife/branch/main/graph/badge.svg)](https://codecov.io/gh/baerlux/smoothlife)
 [![CodeQL](https://github.com/baerlux/smoothlife/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/baerlux/smoothlife/actions/workflows/codeql-analysis.yml)
 
-LGTM Has to be set up manually after template is created:
 
-[![Language grade: C++](https://img.shields.io/lgtm/grade/cpp/github/baerlux/smoothlife)](https://lgtm.com/projects/g/baerlux/smoothlife/context:cpp)
+## About
 
-## About smoothlife
+In this little number crunching game you play the dream of a polisher. It's still a bit buggy and not as polished as it should be but it's amusing to play anyways and was definitly a lot of fun to develop :D
 
+This is a submission for the 2022 [C++ best practices game jam](https://github.com/cpp-best-practices/game_jam)
+based on [ftxui template](https://github.com/cpp-best-practices/ftxui_template)
 
+![](game.png)
 
 ## More Details
 
